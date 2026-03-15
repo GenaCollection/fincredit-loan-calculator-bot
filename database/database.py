@@ -17,7 +17,9 @@ def init_db():
     
     # Create all tables
     Base.metadata.create_all(engine)
-    def get_session():
+    
+
+def get_session():
         """Get database session"""
     if Session is None:
         init_db()
