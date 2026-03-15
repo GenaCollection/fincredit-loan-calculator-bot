@@ -41,3 +41,35 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     
     session.close()
+
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /help command"""
+    help_text = (
+        "ℹ️ Помощь по боту FinCredit\n\n"
+        "📝 Доступные команды:\n"
+        "/start - Главное меню\n"
+        "/help - Показать эту справку\n\n"
+        "💡 Как пользоваться:\n"
+        "1️⃣ Нажмите 'Новый расчёт' для создания кредита\n"
+        "2️⃣ Введите параметры кредита\n"
+        "3️⃣ Выберите тип платежа\n"
+        "4️⃣ Сохраните результат\n\n"
+        "📊 В разделе 'Мои кредиты' вы можете:\n"
+        "• Просматривать сохранённые кредиты\n"
+        "• Редактировать параметры\n"
+        "• Добавлять внеочередные платежи\n"
+        "• Настроить напоминания\n"
+    )
+    
+    await update.message.reply_text(help_text)
+
+
+async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle button callbacks from inline keyboard"""
+    query = update.callback_query
+    await query.answer()
+    
+    # TODO: Implement button handling logic
+    await query.edit_message_text(text=f"Вы выбрали: {query.data}\n\nЭта функция скоро будет доступна!")
+
