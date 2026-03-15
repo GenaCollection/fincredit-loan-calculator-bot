@@ -17,17 +17,7 @@ def init_db():
     
     # Create all tables
     Base.metadata.create_all(engine)
-<<<<<<< HEAD
-=======
-    print("Database initialized successfully!")
->>>>>>> 31258dfd51958b5843db098990e0c39911d59662
-    
-def get_session():
     """Get database session"""
     if Session is None:
         init_db()
-<<<<<<< HEAD
     return Session()
-=======
-    return Session()
->>>>>>> 31258dfd51958b5843db098990e0c39911d59662
