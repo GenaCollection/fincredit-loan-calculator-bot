@@ -20,7 +20,7 @@ def init_db():
     
 
 def get_session():
-        """Get database session"""
+    """Get database session"""
     if Session is None:
         init_db()
     return Session()
