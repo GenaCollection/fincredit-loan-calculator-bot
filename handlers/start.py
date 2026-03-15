@@ -2,7 +2,7 @@
 
 from telegram import Update
 from telegram.ext import ContextTypes
-from database import get_session, User
+from handlers import get_session, User
 from utils.keyboards import get_main_menu
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):

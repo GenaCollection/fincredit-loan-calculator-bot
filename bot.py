@@ -4,7 +4,7 @@
 import logging
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 import config
-from database import init_db
+from handlers import init_db
 from handlers.start import start_command
 
 logging.basicConfig(
