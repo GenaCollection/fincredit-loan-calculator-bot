@@ -6,7 +6,8 @@ Main entry point for the Telegram bot application.
 """
 import logging
 import asyncio
-from telegram.ext import Application, CommandHandle, BotCommandr, CallbackQueryHandler
+from telegram import BotCommand
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 import config
 from database import init_db
 from handlers.start import start_command, help_command, button_callback
@@ -31,28 +32,24 @@ async def set_commands(application):
     logger.info("Bot commands set")
 
 
-async def main():
+def main():
     """Start the bot."""
     # Initialize database
     init_db()
     logger.info("Database initialized")
     # Create the Application
-    application = Application.builder().token(config.BOT_TOKEN).build()
+    application = Application.builder().token(config.BOT_TOKEN).job_queue(None).post_init(set_commands).build()
 
     # Register handlers
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(calculator_handler)  # НОВЫЙ HANDLER
     application.add_handler(CallbackQueryHandler(button_callback))
-        application.add_handler(CallbackQueryHandler(settings_handler, pattern='^settings$'))  # Settings
+    application.add_handler(CallbackQueryHandler(settings_handler, pattern='^settings$'))  # Settings
     application.add_handler(CallbackQueryHandler(change_language, pattern='^lang_'))  # Language change
 
-    # Start the bot
-    # Set bot commands
-    await set_commands(application)
-
-logger.info("Starting FinCredit Loan Calculator Bot...")
+    logger.info("Starting FinCredit Loan Calculator Bot...")
     application.run_polling(allowed_updates=True)
 
-if __name__ == '__main__
-    asyncio.run(main())
+if __name__ == '__main__':
+    main()
