@@ -5,7 +5,7 @@ FinCredit Loan Calculator Bot
 Main entry point for the Telegram bot application.
 """
 import logging
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 import config
 from database import init_db
 from handlers.start import start_command, help_command, button_callback
@@ -23,21 +23,17 @@ def main():
     init_db()
     logger.info("Database initialized")
     
-    # Create the Updater and pass it your bot's token
-    updater = Updater(config.BOT_TOKEN, use_context=True)
-    
-    # Get the dispatcher to register handlers
-    dispatcher = updater.dispatcher
-    
+    # Create the Application
+    application = Application.builder().token(config.BOT_TOKEN).build()
+
     # Register handlers
-    dispatcher.add_handler(CommandHandler("start", start_command))
-    dispatcher.add_handler(CommandHandler("help", help_command))
-    dispatcher.add_handler(CallbackQueryHandler(button_callback))
-    
+    application.add_handler(CommandHandler("start", start_command))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CallbackQueryHandler(button_callback))
+
     # Start the bot
     logger.info("Starting FinCredit Loan Calculator Bot...")
-    updater.start_polling()
-    updater.idle()
+    application.run_polling(allowed_updates=True)
 
 if __name__ == '__main__':
     main()
