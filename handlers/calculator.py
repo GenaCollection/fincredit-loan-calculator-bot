@@ -453,8 +453,7 @@ async def show_results(query, context):
         parse_mode='Markdown'
     )
     
-    return ConversationHandler.END
-
+    return CONFIRM
 
 async def save_loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Save loan to database"""
@@ -547,10 +546,13 @@ calculator_handler = ConversationHandler(
         EXTRA_TYPE: [CallbackQueryHandler(receive_extra_type, pattern='^extra_type_')],
         EXTRA_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_extra_amount)],
         REDUCTION_TYPE: [CallbackQueryHandler(receive_reduction_type, pattern='^reduction_')],
+                CONFIRM: [
+            CallbackQueryHandler(save_loan, pattern='^save_loan$'),
+            CallbackQueryHandler(start_calculator, pattern='^new_calc$')
+        ],
     },
     fallbacks=[
         CallbackQueryHandler(cancel_calculator, pattern='^cancel$'),
-        CallbackQueryHandler(save_loan, pattern='^save_loan$'),
     ],
     name="calculator_conversation",
     persistent=False
