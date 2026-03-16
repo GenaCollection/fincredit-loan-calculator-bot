@@ -1,5 +1,3 @@
-
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -27,7 +25,8 @@ def main():
     logger.info("Database initialized")
     
     # Create the Updater and pass it your bot's token
-    updater = Updater(config.BOT_TOKEN, use_context=True)
+    # ИСПРАВЛЕНО: убран use_context=True (в версии 13.15 он по умолчанию True)
+    updater = Updater(config.BOT_TOKEN)
     
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
@@ -45,5 +44,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
