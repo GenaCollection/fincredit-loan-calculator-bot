@@ -5,11 +5,13 @@ FinCredit Loan Calculator Bot
 Main entry point for the Telegram bot application.
 """
 import logging
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+import asyncio
+from telegram.ext import Application, CommandHandle, BotCommandr, CallbackQueryHandler
 import config
 from database import init_db
 from handlers.start import start_command, help_command, button_callback
 from handlers.calculator import calculator_handler
+from handlers.settings import settings_handler, change_language
 
 # Enable logging
 logging.basicConfig(
@@ -19,12 +21,21 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def main():
+async def set_commands(application):
+    """Set bot commands menu"""
+    commands = [
+        BotCommand("start", "Запустить бота / Start bot"),
+        BotCommand("help", "Помощь / Help"),
+    ]
+    await application.bot.set_my_commands(commands)
+    logger.info("Bot commands set")
+
+
+async def main():
     """Start the bot."""
     # Initialize database
     init_db()
     logger.info("Database initialized")
-
     # Create the Application
     application = Application.builder().token(config.BOT_TOKEN).build()
 
@@ -33,10 +44,15 @@ def main():
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(calculator_handler)  # НОВЫЙ HANDLER
     application.add_handler(CallbackQueryHandler(button_callback))
+        application.add_handler(CallbackQueryHandler(settings_handler, pattern='^settings$'))  # Settings
+    application.add_handler(CallbackQueryHandler(change_language, pattern='^lang_'))  # Language change
 
     # Start the bot
-    logger.info("Starting FinCredit Loan Calculator Bot...")
+    # Set bot commands
+    await set_commands(application)
+
+logger.info("Starting FinCredit Loan Calculator Bot...")
     application.run_polling(allowed_updates=True)
 
-if __name__ == '__main__':
-    main()
+if __name__ == '__main__
+    asyncio.run(main())
