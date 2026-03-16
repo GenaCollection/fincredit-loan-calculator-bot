@@ -1,5 +1,3 @@
-
-
 """Simple calculator handler for loan calculations"""
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackQueryHandler
@@ -36,7 +34,7 @@ async def calculate_demo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         annual_rate=annual_rate,
         months=months,
         extra_monthly=extra_monthly,
-        reduction_type='term',  # уменьшать срок
+        reduction_type='term',
         insurance_monthly=0.0
     )
     
@@ -54,8 +52,7 @@ async def calculate_demo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"⚡️ Сэкономлено: {summary['months_saved']} месяцев\n"
         f"📊 Общая сумма: {summary['total_payment']:,.0f} ₽\n"
         f"💰 Экономия: {totals['total_payment'] - summary['total_payment']:,.0f} ₽\n\n"
-        f"_Функции калькулятора из t-j.ru добавлены!_\n"
-        f"_Полный интерактивный калькулятор в разработке..._"
+        f"_Функции калькулятора из t-j.ru добавлены!_"
     )
     
     keyboard = [
@@ -71,7 +68,5 @@ async def calculate_demo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# Экспортируем handler
+# Handler для Application API (версия 20+)
 calculator_handler = CallbackQueryHandler(calculate_demo, pattern='^new_calc$')
-
-
