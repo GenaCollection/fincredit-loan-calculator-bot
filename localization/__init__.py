@@ -1,5 +1,5 @@
 """Localization helper - Помощник для работы с языками"""
-from localization import ru, en, hy
+from . import ru, en, hy
 from database import get_session
 from database.models import User
 
