@@ -1,6 +1,18 @@
-python-telegram-bot==21.0.1
-python-dotenv==1.0.0
+# Python 3.10+ compatible dependencies
+# Telegram Bot API
+python-telegram-bot==22.7
+
+# Environment variables
+python-dotenv==1.0.1
+
+# Database ORM
 SQLAlchemy==2.0.48
+
+# Task scheduler
 apscheduler==3.10.4
-pytz==2023.3
-python-dateutil==2.8.2
+
+# Timezone support
+pytz==2024.2
+
+# Date utilities
+python-dateutil==2.9.0
