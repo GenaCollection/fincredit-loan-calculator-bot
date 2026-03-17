@@ -11,7 +11,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 import config
 from database import init_db
 from handlers.start import start_command, help_command, button_callback
-from handlers.calculator import calculator_handler, my_loans_handler
+from handlers.calculator import calculator_handler
 from handlers.settings import settings_handler, change_language
 
 # Enable logging
@@ -45,7 +45,6 @@ async def main():
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(calculator_handler)  # ConversationHandler
-    application.add_handler(my_loans_handler)  # ConversationHandler for my loans
     
     # Specific callback handlers MUST be registered BEFORE general button_callback
     application.add_handler(CallbackQueryHandler(settings_handler, pattern='^settings$'))  # Settings
