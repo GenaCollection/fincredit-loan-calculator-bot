@@ -110,6 +110,19 @@ TEXTS = {
                  '📈 Ставка: {rate}%\n'
                  '📅 Срок: {months} мес.\n'
                  '💳 Платёж: {payment:,.0f} ₽/мес\n',
+    'loan_menu_title': '\n\n⚙️ *Управление кредитом*',
+    'btn_loan_schedule': '📅 График платежей',
+    'btn_loan_add_payment': '💸 Добавить платёж',
+    'btn_loan_back_list': '📊 К списку кредитов',
+    'schedule_title': '📅 *График платежей* — {name}\n\n',
+    'schedule_header': '№ | Дата | Платёж | Тело | % | Остаток\n',
+    'schedule_row': '{n:>2} | {date} | {payment:>8,.0f} | {principal:>8,.0f} | {interest:>6,.0f} | {balance:>9,.0f}\n',
+    'schedule_page_info': '\nСтраница {page}/{pages}',
+    'schedule_empty': 'Для этого кредита график ещё не рассчитан.',
+    'add_payment_prompt_amount': '💸 Введите сумму дополнительного платежа (например 10000):',
+    'add_payment_prompt_month': '📅 Введите номер месяца, к которому относится платёж (1 = первый месяц):',
+    'add_payment_saved': '✅ Платёж {amount:,.0f} ₽ для месяца {month} добавлен.\nГрафик и итоги пересчитаны.',
+    'add_payment_cancelled': '❌ Добавление платежа отменено.',
     
     # Settings
     'settings_title': '⚙️ *Настройки*\n\n',

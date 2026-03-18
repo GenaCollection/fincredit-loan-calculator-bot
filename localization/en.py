@@ -110,6 +110,19 @@ TEXTS = {
                  '📈 Rate: {rate}%\n'
                  '📅 Term: {months} months\n'
                  '💳 Payment: {payment:,.0f} ₽/month\n',
+    'loan_menu_title': '\n\n⚙️ *Loan Management*',
+    'btn_loan_schedule': '📅 Payment schedule',
+    'btn_loan_add_payment': '💸 Add payment',
+    'btn_loan_back_list': '📊 Back to loans list',
+    'schedule_title': '📅 *Payment schedule* — {name}\n\n',
+    'schedule_header': '№ | Date | Payment | Principal | % | Balance\n',
+    'schedule_row': '{n:>2} | {date} | {payment:>8,.0f} | {principal:>8,.0f} | {interest:>6,.0f} | {balance:>9,.0f}\n',
+    'schedule_page_info': '\nPage {page}/{pages}',
+    'schedule_empty': 'Schedule is not calculated for this loan yet.',
+    'add_payment_prompt_amount': '💸 Enter extra payment amount (e.g. 10000):',
+    'add_payment_prompt_month': '📅 Enter month number this payment belongs to (1 = first month):',
+    'add_payment_saved': '✅ Payment {amount:,.0f} ₽ for month {month} added.\nSchedule and totals recalculated.',
+    'add_payment_cancelled': '❌ Adding payment cancelled.',
     
     # Settings
     'settings_title': '⚙️ *Settings*\n\n',

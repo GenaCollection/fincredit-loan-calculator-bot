@@ -472,20 +472,60 @@ async def save_loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             session.flush()
         
         loan_count = session.query(Loan).filter_by(user_id=db_user.id).count()
+
+        principal = loan_data['principal']
+        annual_rate = loan_data['annual_rate']
+        months = loan_data['months']
+        payment_type_str = loan_data.get('payment_type', 'annuity')
+        insurance = float(loan_data.get('insurance_monthly', 0.0) or 0.0)
+        has_extra = bool(loan_data.get('has_extra_payments', False))
+        extra_type = loan_data.get('extra_payment_type')
+
+        monthly_payment = None
+        total_payment = None
+        overpayment = None
+        actual_months = None
+
+        if has_extra and extra_type == 'recurring':
+            extra_amount = float(loan_data.get('extra_payment_amount', 0.0) or 0.0)
+            reduction_type = loan_data.get('reduction_type', 'term')
+            schedule, summary = calculate_recurring_extra_payment_schedule(
+                principal=principal,
+                annual_rate=annual_rate,
+                months=months,
+                extra_monthly=extra_amount,
+                reduction_type=reduction_type,
+                insurance_monthly=insurance
+            )
+            if schedule:
+                monthly_payment = float(schedule[0]['payment_amount'])
+            total_payment = float(summary['total_payment'])
+            overpayment = float(summary['overpayment'])
+            actual_months = int(summary['actual_months'])
+        else:
+            totals = calculate_loan_totals(principal, annual_rate, months, payment_type_str)
+            monthly_payment = float(totals['monthly_payment']) + insurance
+            total_payment = float(totals['total_payment']) + insurance * months
+            overpayment = total_payment - principal
+            actual_months = months
         
         loan = Loan(
             user_id=db_user.id,
             name=f"Кредит {loan_count + 1}",
-            principal=loan_data['principal'],
-            annual_rate=loan_data['annual_rate'],
-            months=loan_data['months'],
+            principal=principal,
+            annual_rate=annual_rate,
+            months=months,
             payment_type=PaymentType.ANNUITY if loan_data.get('payment_type') == 'annuity' else PaymentType.DIFFERENTIATED,
             has_insurance=loan_data.get('has_insurance', False),
-            insurance_monthly=loan_data.get('insurance_monthly', 0.0),
+            insurance_monthly=insurance,
             has_extra_payments=loan_data.get('has_extra_payments', False),
             extra_payment_amount=loan_data.get('extra_payment_amount', 0.0),
             extra_payment_type=ExtraPaymentType.RECURRING if loan_data.get('extra_payment_type') == 'recurring' else None,
             reduction_type=ReductionType.PAYMENT if loan_data.get('reduction_type') == 'payment' else ReductionType.TERM,
+            monthly_payment=monthly_payment,
+            total_payment=total_payment,
+            total_overpayment=overpayment,
+            actual_months=actual_months,
             start_date=datetime.now()
         )
         

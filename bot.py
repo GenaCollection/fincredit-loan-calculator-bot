@@ -6,10 +6,10 @@ Main entry point for the Telegram bot application.
 """
 import logging
 from telegram import BotCommand
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 import config
 from database import init_db
-from handlers.start import start_command, help_command, button_callback
+from handlers.start import start_command, help_command, button_callback, handle_add_payment_message
 from handlers.calculator import calculator_handler
 from handlers.settings import settings_handler, change_language
 
@@ -56,6 +56,8 @@ def main():
     # Register handlers - ORDER MATTERS! Specific patterns BEFORE general handlers
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
+    # Text handler for "add payment" flow must go before general conversation handlers
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_add_payment_message))
     application.add_handler(calculator_handler)  # ConversationHandler
 
     # Specific callback handlers MUST be registered BEFORE general button_callback
