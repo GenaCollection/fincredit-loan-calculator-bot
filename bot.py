@@ -9,10 +9,18 @@ from telegram import BotCommand
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 import config
 from database import init_db
-from handlers.start import start_command, help_command, button_callback, handle_add_payment_message
+from handlers.start import (
+    start_command,
+    help_command,
+    button_callback,
+    route_text_messages,
+    myloans_command,
+)
 from handlers.calculator import calculator_handler
 from handlers.manage_loan import edit_loan_handler
-from handlers.settings import settings_handler, change_language
+from handlers.settings import settings_handler, change_language, settings_command
+from handlers.loan_schedule import loan_schedule_callback
+from handlers.add_payment import add_payment_handler
 
 # Enable logging
 logging.basicConfig(
@@ -26,8 +34,10 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 async def set_commands(application):
     """Set bot commands menu"""
     commands = [
-        BotCommand("start", "Запустить бота / Start bot"),
+        BotCommand("start", "Главное меню / Main Menu"),
+        BotCommand("myloans", "Мои кредиты / My Loans"),
         BotCommand("help", "Помощь / Help"),
+        BotCommand("settings", "Настройки / Settings"),
     ]
     await application.bot.set_my_commands(commands)
     logger.info("Bot commands set")
@@ -56,17 +66,27 @@ def main():
     # Register handlers - ORDER MATTERS! Specific patterns BEFORE general handlers
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("myloans", myloans_command))
+    application.add_handler(CommandHandler("settings", settings_command))
     
     # Specific conversation handlers MUST be added BEFORE general button_callback
     application.add_handler(calculator_handler) # ConversationHandler for NEW loan
     application.add_handler(edit_loan_handler)   # ConversationHandler for EDITING loan
-    
+    application.add_handler(add_payment_handler)
+
+    # График платежей (до общего callback)
+    application.add_handler(
+        CallbackQueryHandler(loan_schedule_callback, pattern=r"^loan_schedule_\d+_\d+$")
+    )
+
     # Settings and language
-    application.add_handler(CallbackQueryHandler(settings_handler, pattern='^settings$'))
-    application.add_handler(CallbackQueryHandler(change_language, pattern='^lang_'))
+    application.add_handler(
+        CallbackQueryHandler(settings_handler, pattern=r"^(settings|change_lang)$")
+    )
+    application.add_handler(CallbackQueryHandler(change_language, pattern=r"^lang_"))
     
     # Text handler for "add payment" or other general messages
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_add_payment_message))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, route_text_messages))
     
     # General callback handler MUST be LAST to avoid catching specific patterns
     application.add_handler(CallbackQueryHandler(button_callback))

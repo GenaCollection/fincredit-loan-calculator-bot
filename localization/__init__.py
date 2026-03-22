@@ -21,46 +21,36 @@ LANGUAGE_NAMES = {
 DEFAULT_LANGUAGE = 'ru'
 
 
-def get_text(user_id: int, key: str, **kwargs) -> str:
+def get_text(user_id_or_lang, key: str, **kwargs) -> str:
     """
-    Получить текст на языке пользователя
-    
-    Args:
-        user_id: Telegram ID пользователя
-        key: Ключ текста из словаря TEXTS
-        **kwargs: Параметры для форматирования строки
-    
-    Returns:
-        Отформатированный текст на языке пользователя
-    
-    Example:
-        text = get_text(user_id, 'calc_amount_set', amount=1000000)
+    Универсальное получение текста. Принимает либо telegram_id (int), либо код языка (str).
     """
-    session = get_session()
-    try:
-        # Получаем язык пользователя
-        user = session.query(User).filter_by(telegram_id=user_id).first()
-        lang = user.language if user else DEFAULT_LANGUAGE
-        
-        # Проверяем существование языка
-        if lang not in LANGUAGES:
-            lang = DEFAULT_LANGUAGE
-        
-        # Получаем текст
-        texts = LANGUAGES[lang]
-        text = texts.get(key, f'[Missing: {key}]')
-        
-        # Форматируем с параметрами
-        if kwargs:
-            try:
-                text = text.format(**kwargs)
-            except (KeyError, ValueError) as e:
-                # Если ошибка форматирования, возвращаем исходный текст
-                pass
-        
-        return text
-    finally:
-        session.close()
+    lang = DEFAULT_LANGUAGE
+
+    if isinstance(user_id_or_lang, str):
+        lang = user_id_or_lang
+    elif isinstance(user_id_or_lang, int):
+        session = get_session()
+        try:
+            user = session.query(User).filter_by(telegram_id=user_id_or_lang).first()
+            if user:
+                lang = user.language
+        finally:
+            session.close()
+
+    if lang not in LANGUAGES:
+        lang = DEFAULT_LANGUAGE
+
+    texts = LANGUAGES[lang]
+    text = texts.get(key, f'[Missing: {key}]')
+
+    if kwargs:
+        try:
+            text = text.format(**kwargs)
+        except (KeyError, ValueError):
+            pass
+
+    return text
 
 
 def get_user_language(user_id: int) -> str:

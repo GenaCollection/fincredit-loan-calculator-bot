@@ -8,9 +8,11 @@ from telegram.ext import (
     filters
 )
 import telegram.error
-from database import get_session, get_user_language
-from database.models import User, Loan, PaymentType
-from localization.loader import get_text
+from database import get_session
+from database.models import ExtraPayment, Loan, User
+from database.operations import get_loan_for_user
+from utils.loan_schedule import build_schedule_for_loan, refresh_loan_cached_totals
+from localization import get_text, get_user_language
 import logging
 
 logger = logging.getLogger(__name__)
@@ -28,7 +30,7 @@ async def start_edit_loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['edit_loan_id'] = loan_id
     
     user_id = query.from_user.id
-    lang = await get_user_language(user_id)
+    lang = get_user_language(user_id)
     
     # Get loan name for title
     session = get_session()
@@ -65,7 +67,7 @@ async def receive_edit_choice(update: Update, context: ContextTypes.DEFAULT_TYPE
     context.user_data['edit_field'] = field
     
     user_id = query.from_user.id
-    lang = await get_user_language(user_id)
+    lang = get_user_language(user_id)
     prompt_key = f'edit_{field}_prompt'
     
     try:
@@ -83,14 +85,19 @@ async def receive_edit_choice(update: Update, context: ContextTypes.DEFAULT_TYPE
 async def receive_new_value(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Receive new value and update DB"""
     user_id = update.message.from_user.id
-    lang = await get_user_language(user_id)
+    lang = get_user_language(user_id)
     field = context.user_data.get('edit_field')
     loan_id = context.user_data.get('edit_loan_id')
     new_value_raw = update.message.text.strip()
     
     session = get_session()
     try:
-        loan = session.query(Loan).filter_by(id=loan_id).first()
+        loan = (
+            session.query(Loan)
+            .join(User, Loan.user_id == User.id)
+            .filter(User.telegram_id == user_id, Loan.id == loan_id)
+            .first()
+        )
         if not loan:
             await update.message.reply_text(get_text(lang, 'error_generic'))
             return ConversationHandler.END
@@ -113,7 +120,12 @@ async def receive_new_value(update: Update, context: ContextTypes.DEFAULT_TYPE):
             loan.months = int(new_value_raw)
             display_field = get_text(lang, 'btn_edit_term')
             display_value = f"{loan.months} мес."
-        
+
+        if field != 'name':
+            extras = session.query(ExtraPayment).filter_by(loan_id=loan.id).all()
+            schedule = build_schedule_for_loan(loan, extras)
+            refresh_loan_cached_totals(session, loan, schedule)
+
         session.commit()
         
         await update.message.reply_text(
@@ -138,7 +150,7 @@ async def cancel_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     loan_id = context.user_data.get('edit_loan_id')
     user_id = query.from_user.id
-    lang = await get_user_language(user_id)
+    lang = get_user_language(user_id)
     
     try:
         await query.edit_message_text(
