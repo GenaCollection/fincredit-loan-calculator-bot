@@ -30,7 +30,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     lang = await get_user_language(user_id)
     
-    # We can send both - an inline menu for interaction and a reply keyboard for the \"menu\" button
+    # We can send both - an inline menu for interaction and a reply keyboard for the "menu" button
     await update.message.reply_text(
         get_text(lang, 'welcome'),
         reply_markup=get_reply_keyboard(lang),
@@ -108,7 +108,7 @@ async def show_my_loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = get_text(lang, 'my_loans_title')
         keyboard = []
         for loan in loans:
-            keyboard.append([InlineKeyboardButton(f\"📝 {loan.name}\", callback_data=f\"view_loan_{loan.id}\")])
+            keyboard.append([InlineKeyboardButton(f"📝 {loan.name}", callback_data=f"view_loan_{loan.id}")])
         keyboard.append([InlineKeyboardButton(get_text(lang, 'btn_back'), callback_data='main_menu')])
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -138,10 +138,10 @@ async def show_loan_details(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     text += get_text(lang, 'loan_menu_title')
     
     keyboard = [
-        [InlineKeyboardButton(get_text(lang, 'btn_loan_schedule'), callback_data=f\"loan_schedule_{loan.id}_1\")],
-        [InlineKeyboardButton(get_text(lang, 'btn_loan_add_payment'), callback_data=f\"add_payment_{loan.id}\")],
-        [InlineKeyboardButton(get_text(lang, 'btn_edit'), callback_data=f\"edit_loan_{loan.id}\")],
-        [InlineKeyboardButton(get_text(lang, 'btn_delete'), callback_data=f\"delete_loan_{loan.id}\")],
+        [InlineKeyboardButton(get_text(lang, 'btn_loan_schedule'), callback_data=f"loan_schedule_{loan.id}_1")],
+        [InlineKeyboardButton(get_text(lang, 'btn_loan_add_payment'), callback_data=f"add_payment_{loan.id}")],
+        [InlineKeyboardButton(get_text(lang, 'btn_edit'), callback_data=f"edit_loan_{loan.id}")],
+        [InlineKeyboardButton(get_text(lang, 'btn_delete'), callback_data=f"delete_loan_{loan.id}")],
         [InlineKeyboardButton(get_text(lang, 'btn_loan_back_list'), callback_data='my_loans')]
     ]
     
