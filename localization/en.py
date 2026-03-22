@@ -33,6 +33,8 @@ Choose an action:""",
 Let's calculate your loan!
 
 📝 Enter *loan amount* (e.g. 1000000):""",
+    "calc_rate_prompt": "📈 Enter *annual interest rate* (e.g. 15):",
+    "calc_term_prompt": "📅 Enter *loan term in months* (e.g. 60):",
     "calc_amount_set": "✅ Amount: {amount:,.0f} $",
     "calc_rate_set": "✅ Rate: {rate}%",
     "calc_term_set": "✅ Term: {months} months",
