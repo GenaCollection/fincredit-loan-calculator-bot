@@ -1,6 +1,6 @@
-"""Localization helper - Помощник для работы с языками"""
+\"\"\"Localization helper - Помощник для работы с языками\"\"\"
 from . import ru, en, hy
-from database import get_session
+from database.database import get_session
 from database.models import User
 
 # Карта языковых модулей
@@ -20,13 +20,12 @@ LANGUAGE_NAMES = {
 # Язык по умолчанию
 DEFAULT_LANGUAGE = 'ru'
 
-
 def get_text(user_id_or_lang, key: str, **kwargs) -> str:
-    """
+    \"\"\"
     Универсальное получение текста. Принимает либо telegram_id (int), либо код языка (str).
-    """
+    \"\"\"
     lang = DEFAULT_LANGUAGE
-
+    
     if isinstance(user_id_or_lang, str):
         lang = user_id_or_lang
     elif isinstance(user_id_or_lang, int):
@@ -35,53 +34,42 @@ def get_text(user_id_or_lang, key: str, **kwargs) -> str:
             user = session.query(User).filter_by(telegram_id=user_id_or_lang).first()
             if user:
                 lang = user.language
+        except Exception:
+            lang = DEFAULT_LANGUAGE
         finally:
             session.close()
 
     if lang not in LANGUAGES:
         lang = DEFAULT_LANGUAGE
-
+    
     texts = LANGUAGES[lang]
     text = texts.get(key, f'[Missing: {key}]')
-
+    
     if kwargs:
         try:
             text = text.format(**kwargs)
-        except (KeyError, ValueError):
+        except (KeyError, ValueError, IndexError):
             pass
-
+            
     return text
 
-
 def get_user_language(user_id: int) -> str:
-    """
+    \"\"\"
     Получить язык пользователя
-    
-    Args:
-        user_id: Telegram ID пользователя
-    
-    Returns:
-        Код языка ('ru', 'en', 'hy')
-    """
+    \"\"\"
     session = get_session()
     try:
         user = session.query(User).filter_by(telegram_id=user_id).first()
         return user.language if user else DEFAULT_LANGUAGE
+    except Exception:
+        return DEFAULT_LANGUAGE
     finally:
         session.close()
 
-
 def set_user_language(user_id: int, language: str) -> bool:
-    """
+    \"\"\"
     Установить язык пользователя
-    
-    Args:
-        user_id: Telegram ID пользователя
-        language: Код языка ('ru', 'en', 'hy')
-    
-    Returns:
-        True если успешно, False если ошибка
-    """
+    \"\"\"
     if language not in LANGUAGES:
         return False
     
@@ -99,19 +87,11 @@ def set_user_language(user_id: int, language: str) -> bool:
     finally:
         session.close()
 
-
 def get_language_name(lang_code: str) -> str:
-    """
+    \"\"\"
     Получить название языка
-    
-    Args:
-        lang_code: Код языка
-    
-    Returns:
-        Название языка с флагом
-    """
+    \"\"\"
     return LANGUAGE_NAMES.get(lang_code, lang_code)
-
 
 # Экспортируем функции
 __all__ = [
