@@ -8,9 +8,9 @@ from telegram.ext import (
     filters
 )
 import telegram.error
-from database import get_session
+from database import get_session, get_user_language
 from database.models import User, Loan, PaymentType
-from localization import get_text
+from localization.loader import get_text
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,15 +27,23 @@ async def start_edit_loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     loan_id = int(query.data.split('_')[2])
     context.user_data['edit_loan_id'] = loan_id
     
-    user = query.from_user
-    text = get_text(user.id, 'edit_loan_title')
+    user_id = query.from_user.id
+    lang = await get_user_language(user_id)
+    
+    # Get loan name for title
+    session = get_session()
+    loan = session.query(Loan).filter_by(id=loan_id).first()
+    loan_name = loan.name if loan else \"\"
+    session.close()
+    
+    text = get_text(lang, 'edit_loan_title').format(name=loan_name)
     
     keyboard = [
-        [InlineKeyboardButton(get_text(user.id, 'btn_edit_name'), callback_data=\"edit_field_name\")],
-        [InlineKeyboardButton(get_text(user.id, 'btn_edit_amount'), callback_data=\"edit_field_amount\")],
-        [InlineKeyboardButton(get_text(user.id, 'btn_edit_rate'), callback_data=\"edit_field_rate\")],
-        [InlineKeyboardButton(get_text(user.id, 'btn_edit_term'), callback_data=\"edit_field_term\")],
-        [InlineKeyboardButton(get_text(user.id, 'btn_cancel'), callback_data=\"cancel_edit\")]
+        [InlineKeyboardButton(get_text(lang, 'btn_edit_name'), callback_data=\"edit_field_name\")],
+        [InlineKeyboardButton(get_text(lang, 'btn_edit_amount'), callback_data=\"edit_field_amount\")],
+        [InlineKeyboardButton(get_text(lang, 'btn_edit_rate'), callback_data=\"edit_field_rate\")],
+        [InlineKeyboardButton(get_text(lang, 'btn_edit_term'), callback_data=\"edit_field_term\")],
+        [InlineKeyboardButton(get_text(lang, 'btn_cancel'), callback_data=\"cancel_edit\")]
     ]
     
     try:
@@ -56,14 +64,15 @@ async def receive_edit_choice(update: Update, context: ContextTypes.DEFAULT_TYPE
     field = query.data.split('_')[2]
     context.user_data['edit_field'] = field
     
-    user = query.from_user
-    prompt_key = f'prompt_edit_{field}'
+    user_id = query.from_user.id
+    lang = await get_user_language(user_id)
+    prompt_key = f'edit_{field}_prompt'
     
     try:
         await query.edit_message_text(
-            get_text(user.id, prompt_key),
+            get_text(lang, prompt_key),
             reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton(get_text(user.id, 'btn_cancel'), callback_data=\"cancel_edit\")
+                InlineKeyboardButton(get_text(lang, 'btn_cancel'), callback_data=\"cancel_edit\")
             ]]),
             parse_mode='Markdown'
         )
@@ -73,7 +82,8 @@ async def receive_edit_choice(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def receive_new_value(update: Update, context: ContextTypes.DEFAULT_TYPE):
     \"\"\"Receive new value and update DB\"\"\"
-    user = update.message.from_user
+    user_id = update.message.from_user.id
+    lang = await get_user_language(user_id)
     field = context.user_data.get('edit_field')
     loan_id = context.user_data.get('edit_loan_id')
     new_value_raw = update.message.text.strip()
@@ -82,34 +92,44 @@ async def receive_new_value(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         loan = session.query(Loan).filter_by(id=loan_id).first()
         if not loan:
-            await update.message.reply_text(get_text(user.id, 'error_generic'))
+            await update.message.reply_text(get_text(lang, 'error_generic'))
             return ConversationHandler.END
-            
+        
+        display_field = \"\"
+        display_value = new_value_raw
+        
         if field == 'name':
             loan.name = new_value_raw
+            display_field = get_text(lang, 'btn_edit_name')
         elif field == 'amount':
             loan.principal = float(new_value_raw.replace(' ', '').replace(',', '.'))
+            display_field = get_text(lang, 'btn_edit_amount')
+            display_value = f\"{loan.principal:,.0f} ₽\"
         elif field == 'rate':
             loan.annual_rate = float(new_value_raw.replace(',', '.'))
+            display_field = get_text(lang, 'btn_edit_rate')
+            display_value = f\"{loan.annual_rate}%\"
         elif field == 'term':
             loan.months = int(new_value_raw)
-            
+            display_field = get_text(lang, 'btn_edit_term')
+            display_value = f\"{loan.months} мес.\"
+        
         session.commit()
         
         await update.message.reply_text(
-            get_text(user.id, 'edit_success'),
+            get_text(lang, 'edit_success').format(field=display_field, value=display_value),
             reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton(get_text(user.id, 'btn_back'), callback_data=f\"loan_{loan_id}\")
+                InlineKeyboardButton(get_text(lang, 'btn_back'), callback_data=f\"view_loan_{loan_id}\")
             ]]),
             parse_mode='Markdown'
         )
     except Exception as e:
         logger.error(f\"Error editing loan: {e}\")
-        await update.message.reply_text(get_text(user.id, 'error_invalid_number'))
+        await update.message.reply_text(get_text(lang, 'error_invalid_number'))
         return EDIT_VALUE
     finally:
         session.close()
-        
+    
     return ConversationHandler.END
 
 async def cancel_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -117,14 +137,14 @@ async def cancel_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     loan_id = context.user_data.get('edit_loan_id')
+    user_id = query.from_user.id
+    lang = await get_user_language(user_id)
     
-    # We can't easily return to the loan menu from here because button_callback expects a specific format
-    # but we can end the conversation and let the user click buttons again
     try:
         await query.edit_message_text(
-            get_text(query.from_user.id, 'edit_cancelled'),
+            get_text(lang, 'edit_cancelled'),
             reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton(get_text(query.from_user.id, 'btn_back'), callback_data=f\"loan_{loan_id}\")
+                InlineKeyboardButton(get_text(lang, 'btn_back'), callback_data=f\"view_loan_{loan_id}\")
             ]])
         )
     except telegram.error.BadRequest: pass
