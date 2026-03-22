@@ -472,7 +472,7 @@ async def _cancel_conversation(update: Update, context: ContextTypes.DEFAULT_TYP
 
 calculator_handler = ConversationHandler(
     entry_points=[
-        CallbackQueryHandler(_entry_new_calc, pattern=r'^new_calc$'),
+        # Старт из reply-клавиатуры "Новый расчёт"
         MessageHandler(
             NewCalcReplyFilter() & filters.TEXT & ~filters.COMMAND,
             _entry_new_calc_reply,

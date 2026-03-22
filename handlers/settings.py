@@ -5,6 +5,8 @@ from database import get_session
 from database.models import User
 from localization import get_text, get_language_name
 import logging
+from callbacks import CallbackType, make_callback_data
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,13 +42,29 @@ def build_settings_markup(user_id: int):
     text += f"\n\n{get_text(user_id, 'settings_language', lang=get_language_name(current_lang))}"
 
     keyboard = [
-        [
-            InlineKeyboardButton(get_text(user_id, 'btn_lang_ru'), callback_data="lang_ru"),
-            InlineKeyboardButton(get_text(user_id, 'btn_lang_en'), callback_data="lang_en")
-        ],
-        [InlineKeyboardButton(get_text(user_id, 'btn_lang_hy'), callback_data="lang_hy")],
-        [InlineKeyboardButton(get_text(user_id, 'btn_back'), callback_data="main_menu")]
-    ]
+    [
+        InlineKeyboardButton(
+            get_text(user_id, 'btn_lang_ru'),
+            callback_data=make_callback_data(CallbackType.SETTINGS, "lang", "ru"),
+        ),
+        InlineKeyboardButton(
+            get_text(user_id, 'btn_lang_en'),
+            callback_data=make_callback_data(CallbackType.SETTINGS, "lang", "en"),
+        ),
+    ],
+    [
+        InlineKeyboardButton(
+            get_text(user_id, 'btn_lang_hy'),
+            callback_data=make_callback_data(CallbackType.SETTINGS, "lang", "hy"),
+        ),
+    ],
+    [
+        InlineKeyboardButton(
+            get_text(user_id, 'btn_back'),
+            callback_data=make_callback_data(CallbackType.MAIN_MENU, "open"),
+        )
+    ],
+]
     return text, InlineKeyboardMarkup(keyboard)
 
 
@@ -84,7 +102,8 @@ async def change_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     user = query.from_user
-    lang = query.data.replace('lang_', '')
+    parts = query.data.split(':')
+    lang = parts[-1] if len(parts) >= 3 else 'ru'
 
     session = get_session()
     try:
@@ -94,7 +113,12 @@ async def change_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
             session.commit()
 
             success_text = get_text(user.id, 'language_changed', lang=get_language_name(lang))
-            keyboard = [[InlineKeyboardButton(get_text(user.id, 'btn_back'), callback_data="settings")]]
+            keyboard = [[
+    InlineKeyboardButton(
+        get_text(user.id, 'btn_back'),
+        callback_data=make_callback_data(CallbackType.SETTINGS, "open"),
+    )
+]]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
             await query.edit_message_text(
