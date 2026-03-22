@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
+\"\"\"
 FinCredit Loan Calculator Bot
 Main entry point for the Telegram bot application.
-"""
+\"\"\"
 import logging
 from telegram import BotCommand
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 import config
-from database import init_db
+from database.database import init_db
 from handlers.start import (
     start_command,
     help_command,
@@ -27,32 +27,31 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
-
 logger = logging.getLogger(__name__)
-logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger(\"httpx\").setLevel(logging.WARNING)
 
 async def set_commands(application):
-    """Set bot commands menu"""
+    \"\"\"Set bot commands menu\"\"\"
     commands = [
-        BotCommand("start", "Главное меню / Main Menu"),
-        BotCommand("myloans", "Мои кредиты / My Loans"),
-        BotCommand("help", "Помощь / Help"),
-        BotCommand("settings", "Настройки / Settings"),
+        BotCommand(\"start\", \"Главное меню / Main Menu\"),
+        BotCommand(\"myloans\", \"Мои кредиты / My Loans\"),
+        BotCommand(\"help\", \"Помощь / Help\"),
+        BotCommand(\"settings\", \"Настройки / Settings\"),
     ]
     await application.bot.set_my_commands(commands)
-    logger.info("Bot commands set")
+    logger.info(\"Bot commands set\")
 
 def main():
-    """Start the bot."""
+    \"\"\"Start the bot.\"\"\"
     if not config.BOT_TOKEN:
         raise RuntimeError(
-            "BOT_TOKEN is not set. Create a .env file (or set environment variable) with BOT_TOKEN=... "
-            "and restart."
+            \"BOT_TOKEN is not set. Create a .env file (or set environment variable) with BOT_TOKEN=... \"
+            \"and restart.\"
         )
-
+    
     # Initialize database
     init_db()
-    logger.info("Database initialized")
+    logger.info(\"Database initialized\")
 
     # Create the Application
     application = (
@@ -63,35 +62,33 @@ def main():
         .build()
     )
 
-    # Register handlers - ORDER MATTERS! Specific patterns BEFORE general handlers
-    application.add_handler(CommandHandler("start", start_command))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("myloans", myloans_command))
-    application.add_handler(CommandHandler("settings", settings_command))
+    # Register handlers - ORDER MATTERS!
+    application.add_handler(CommandHandler(\"start\", start_command))
+    application.add_handler(CommandHandler(\"help\", help_command))
+    application.add_handler(CommandHandler(\"myloans\", myloans_command))
+    application.add_handler(CommandHandler(\"settings\", settings_command))
     
     # Specific conversation handlers MUST be added BEFORE general button_callback
     application.add_handler(calculator_handler) # ConversationHandler for NEW loan
-    application.add_handler(edit_loan_handler)   # ConversationHandler for EDITING loan
-    application.add_handler(add_payment_handler)
-
-    # График платежей (до общего callback)
-    application.add_handler(
-        CallbackQueryHandler(loan_schedule_callback, pattern=r"^loan_schedule_\d+_\d+$")
-    )
-
-    # Settings and language
-    application.add_handler(
-        CallbackQueryHandler(settings_handler, pattern=r"^(settings|change_lang)$")
-    )
-    application.add_handler(CallbackQueryHandler(change_language, pattern=r"^lang_"))
+    application.add_handler(edit_loan_handler) # ConversationHandler for EDITING loan
+    application.add_handler(add_payment_handler) # ConversationHandler for ADDING payment
     
-    # Text handler for "add payment" or other general messages
+    # Schedule and Settings (before general callback)
+    application.add_handler(
+        CallbackQueryHandler(loan_schedule_callback, pattern=r\"^loan_schedule_\\d+_\\d+$\")
+    )
+    application.add_handler(
+        CallbackQueryHandler(settings_handler, pattern=r\"^(settings|change_lang)$\")
+    )
+    application.add_handler(CallbackQueryHandler(change_language, pattern=r\"^lang_\"))
+    
+    # Text messages (reply buttons)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, route_text_messages))
     
-    # General callback handler MUST be LAST to avoid catching specific patterns
+    # General button callback
     application.add_handler(CallbackQueryHandler(button_callback))
 
-    logger.info("Starting FinCredit Loan Calculator Bot...")
+    logger.info(\"Starting FinCredit Loan Calculator Bot...\")
     application.run_polling(allowed_updates=True)
 
 if __name__ == '__main__':
